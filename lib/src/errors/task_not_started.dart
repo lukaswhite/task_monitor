@@ -1,0 +1,1 @@
+class TaskNotStarted extends Error {}
