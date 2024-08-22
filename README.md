@@ -106,6 +106,16 @@ You can optionally provide a message:
 task.complete(message: 'Synched $count records');
 ```
 
+You can also attach arbitrary data:
+
+```dart
+task.complete(
+  data: {
+    'num_records': 123,
+  },
+);
+```
+
 ## Failing a Task
 
 If a task fails to run for whatever reason, use the `fail()` method rather than `complete()`:
@@ -207,31 +217,35 @@ TaskMonitor monitor = TaskMonitor(historyEnabled: false,);
 You can limit the number of records. In the following example, the monitor will only keep hold of the last 2o executions:
 
 ```dart
-TaskMonitor monitor = TaskMonitor(historyLimit: 20,);
-```
-
-You can clear the history for a given task, or for all tasks:
-
-```dart
-monitor.clearHistory('synch-data');
-monitor.clearAllHistory();
-```
-
-## Example
-
-The following example demonstrates a number of aspects:
-
-> You'll find this in the `examples` folder
-
-```dart
 import 'package:task_monitor/task_monitor.dart';
+
+class SynchCounts {
+  final int created;
+  final int updated;
+  final int deleted;
+
+  SynchCounts({
+    required this.created,
+    required this.updated,
+    required this.deleted,
+  });
+}
 
 TaskMonitor monitor = TaskMonitor();
 
 Future<void> taskOne() async {
   monitor.getTask('task1')!.start();
   await Future.delayed(const Duration(seconds: 3));
-  monitor.getTask('task1')!.complete(message: 'Task One has completed');
+  monitor.getTask('task1')!.complete(
+    message: 'Task One has completed',
+    data: {
+      'counts': SynchCounts(
+        created: 6,
+        updated: 3,
+        deleted: 2,
+      )
+    }
+  );
 }
 
 Future<void> taskTwo() async {
@@ -262,6 +276,10 @@ void main() async {
       if(update.hasMessage) {
         print(' - ${update.message}');
       }
+      if(update.hasData && update.data.containsKey('counts') && update.data['counts'] is SynchCounts) {
+        SynchCounts counts = update.data['counts'];
+        print('Created ${counts.created} records, updated ${counts.updated} and deleted ${counts.deleted}');
+      }
     }
   );
 
@@ -283,7 +301,6 @@ void main() async {
   print('Task One last ran ${DateTime.now().difference(monitor.getHistory('task1').first!.completedAt!).inMilliseconds}ms ago');
 
 }
-
 ```
 
 ## Cron
@@ -300,13 +317,13 @@ Task task = monitor.getOrCreate(id: 'synch-data');
 final cron = Cron();
 
 cron.schedule(Schedule.parse('*/10 * * * *'), () async {
-    if(!task.isRunning()) {
-        task.start();
-        // do something
-        task.complete();
-    } else {
-        logger.warn('Scheduled task is already running - perhaps reduce the frequency?');
-    }
+  if(!task.isRunning()) {
+    task.start();
+    // do something
+    task.complete();
+  } else {
+    logger.warn('Scheduled task is already running - perhaps reduce the frequency?');
+  }
 });
 
 ```

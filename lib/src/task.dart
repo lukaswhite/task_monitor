@@ -38,7 +38,10 @@ class Task {
     status = TaskStatus.started;
   }
 
-  void complete({String? message,}) {
+  void complete({
+    String? message,
+    Map<String, dynamic>? data,
+  }) {
     if(status != TaskStatus.started) {
       throw TaskNotStarted();
     }
@@ -46,6 +49,7 @@ class Task {
       task: this, 
       status: TaskStatus.completed,
       message: message,
+      data: data,
     );
     status = TaskStatus.completed;
   }

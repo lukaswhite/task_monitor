@@ -1,11 +1,32 @@
 import 'package:task_monitor/task_monitor.dart';
 
+class SynchCounts {
+  final int created;
+  final int updated;
+  final int deleted;
+
+  SynchCounts({
+    required this.created,
+    required this.updated,
+    required this.deleted,
+  });
+}
+
 TaskMonitor monitor = TaskMonitor();
 
 Future<void> taskOne() async {
   monitor.getTask('task1')!.start();
   await Future.delayed(const Duration(seconds: 3));
-  monitor.getTask('task1')!.complete(message: 'Task One has completed');
+  monitor.getTask('task1')!.complete(
+    message: 'Task One has completed',
+    data: {
+      'counts': SynchCounts(
+        created: 6,
+        updated: 3,
+        deleted: 2,
+      )
+    }
+  );
 }
 
 Future<void> taskTwo() async {
@@ -35,6 +56,10 @@ void main() async {
       print('${update.task.id}: ${update.status.name}');
       if(update.hasMessage) {
         print(' - ${update.message}');
+      }
+      if(update.hasData && update.data.containsKey('counts') && update.data['counts'] is SynchCounts) {
+        SynchCounts counts = update.data['counts'];
+        print('Created ${counts.created} records, updated ${counts.updated} and deleted ${counts.deleted}');
       }
     }
   );

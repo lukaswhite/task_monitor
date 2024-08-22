@@ -95,12 +95,14 @@ class TaskMonitor {
     required TaskStatus status,
     String? message,
     Error? error,
+    Map<String, dynamic>? data,
   }) {
     Update update = Update(
       task: task, 
       status: status,
       message: message,
       error: error,
+      data: data,
     );
     if(status == TaskStatus.started) {
       _timers[task.id] = Stopwatch()..start();

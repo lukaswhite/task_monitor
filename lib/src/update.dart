@@ -9,6 +9,7 @@ class Update {
   Duration? duration;
   String? message;
   Error? error;
+  Map<String, dynamic> data;
 
   Update({
     required this.task,
@@ -16,21 +17,25 @@ class Update {
     this.duration,
     this.message,
     this.error,
-  }): timestamp = DateTime.now();
+    Map<String, dynamic>? data,
+  }): timestamp = DateTime.now(), data = data ?? {};
 
   Update.started({
     required this.task,
     this.message,
     this.error,
-  }): status = TaskStatus.started, timestamp = DateTime.now();
+    Map<String, dynamic>? data,
+  }): status = TaskStatus.started, 
+    timestamp = DateTime.now(),
+    data = data ?? {};
 
   Update.completed({
     required this.task,
     required this.duration,
     this.message,
     this.error,
-  }): status = TaskStatus.completed, timestamp = DateTime.now();
-
+    Map<String, dynamic>? data,
+  }): status = TaskStatus.completed, timestamp = DateTime.now(), data = data ?? {};
 
   bool get hasMessage {
     return message != null;
@@ -38,6 +43,10 @@ class Update {
 
   bool get hasError {
     return error != null;
+  }
+
+  bool get hasData {
+    return data.keys.isNotEmpty;
   }
 
 }
