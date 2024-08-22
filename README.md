@@ -14,7 +14,7 @@ By default it stores a record of when tasks were run, whether they suceeded or f
 
 > Note that this is only stored in memory, but it's easy to provide a storage mechanism.
 
-It also allows you to ensure that the same task cannot be run more than once at the same time. This is particularly useful if, for example, you use a package like Cron to schedule regular maintenance tasks. Should a task take longer than expected to run, you may opt to skip it on the next scheduled run.
+It also allows you to ensure that the same task cannot be run more than once at the same time. This is particularly useful if, for example, you use a package like [cron](https://pub.dev/packages/cron) to schedule regular maintenance tasks. Should a task take longer than expected to run, you may opt to skip it on the next scheduled run.
 
 ## Fundamentals
 
@@ -39,6 +39,8 @@ Typically you can only start a task if it's in the `pending`, `completed` or `fa
 Create a task like this:
 
 ```dart
+import 'package:task_monitor/task_monitor.dart';
+
 TaskMonitor monitor = TaskMonitor();
 Task task = monitor.create(id: 'synch-data');
 ```
@@ -140,17 +142,17 @@ TaskMonitor monitor = TaskMonitor();
 Task task = monitor.create(id: 'synch-data');
 
 monitor.updates.listen((update) => {
-    if(update.status == TaskStatus.started) {
-        logger.info('${update.task.name} has started');
-    } else if(update.status == TaskStatus.completed) {
-        logger.info('${update.task.name} ran in ${update.duration!.inMilliseconds}ms');
-    } else if(update.status == TaskStatus.failed) {
-        logger.error('${update.task.name} failed!');
-        yourCustomErrorHandler.log(
-            id: update.task.id,
-            error: update.error,
-        );
-    }
+  if(update.status == TaskStatus.started) {
+    logger.info('${update.task.name} has started');
+  } else if(update.status == TaskStatus.completed) {
+    logger.info('${update.task.name} ran in ${update.duration!.inMilliseconds}ms');
+  } else if(update.status == TaskStatus.failed) {
+    logger.error('${update.task.name} failed!');
+    yourCustomErrorHandler.log(
+      id: update.task.id,
+      error: update.error,
+    );
+  }
 })
 ```
 
@@ -281,5 +283,30 @@ void main() async {
   print('Task One last ran ${DateTime.now().difference(monitor.getHistory('task1').first!.completedAt!).inMilliseconds}ms ago');
 
 }
+
+```
+
+## Cron
+
+Here's an example of how you might use this package with [cron](https://pub.dev/packages/cron). It ensures that a task will only run once at a given time.
+
+```dart
+import 'package:task_monitor/task_monitor.dart';
+import 'package:cron/cron.dart';
+
+TaskMonitor monitor = TaskMonitor();
+Task task = monitor.getOrCreate(id: 'synch-data');
+
+final cron = Cron();
+
+cron.schedule(Schedule.parse('*/10 * * * *'), () async {
+    if(!task.isRunning()) {
+        task.start();
+        // do something
+        task.complete();
+    } else {
+        logger.warn('Scheduled task is already running - perhaps reduce the frequency?');
+    }
+});
 
 ```
