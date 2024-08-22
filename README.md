@@ -124,12 +124,12 @@ You can optionally provide an error:
 
 ```
 try {
-    // do something
-} catch (e) {
-    task.fail(
-        message: 'Failed to synch!,
-        error: e,
-    );
+  // do something
+} on Error catch(e){
+  task.fail(
+    message: 'Failed to synch!,
+    error: e,
+  );
 }
 ```
 
@@ -153,7 +153,7 @@ monitor.updates.listen((update) => {
       error: update.error,
     );
   }
-})
+});
 ```
 
 ## History
