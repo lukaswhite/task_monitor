@@ -148,4 +148,8 @@ class History {
     return json;
   }
 
+  void dispose() {
+    _controller.close();
+  }
+
 }

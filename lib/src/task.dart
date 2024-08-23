@@ -12,6 +12,9 @@ class Task with HasStatus {
   TaskStatus _status;
   Map<String, dynamic> data = {};
 
+  /// Note that you shouldn't instantiate a task directly; let the monitor do it.
+  /// That way, the task has a line of communication back to the monitor, which
+  /// is integral to how the whole system works.
   Task({
     required this.id, 
     required TaskStatus status,

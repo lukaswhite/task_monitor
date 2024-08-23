@@ -59,7 +59,7 @@ void main() async {
       }
       if(update.hasData && update.data.containsKey('counts') && update.data['counts'] is SynchCounts) {
         SynchCounts? counts = update.getData<SynchCounts>('counts');
-        print('Created ${counts!.created} records, updated ${counts!.updated} and deleted ${counts!.deleted}');
+        print('Created ${counts!.created} records, updated ${counts.updated} and deleted ${counts.deleted}');
       }
     }
   );

@@ -1,4 +1,3 @@
-import 'package:task_monitor/src/task_execution.dart';
 import 'package:task_monitor/task_monitor.dart';
 import 'package:test/test.dart';
 
@@ -58,13 +57,13 @@ void main() {
     });
     test('Can get tasks by ID', () {
       TaskMonitor monitor = TaskMonitor();
-      Task task = monitor.create(id: 'task1');
+      monitor.create(id: 'task1');
       expect(monitor.getTask('task1'), isA<Task>());
       expect(monitor.getTask('task1')!.id, 'task1');
     });
     test('Get tasks by ID returns null if not found', () {
       TaskMonitor monitor = TaskMonitor();
-      Task task = monitor.create(id: 'task1');
+      monitor.create(id: 'task1');
       expect(monitor.getTask('task2'), isNull);
     });
     test('Can get a list of task IDs', () {

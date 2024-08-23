@@ -13,7 +13,6 @@ class TaskMonitor {
   final List<Task> _tasks;
   final StreamController<Update> _controller;
   final Map<String, Stopwatch> _timers;
-  final Map<String, List<TaskExecution>> _history;
   final History history;
   bool historyEnabled;
   int? historyLimit;
@@ -26,7 +25,6 @@ class TaskMonitor {
     _tasks = [], 
     _controller = StreamController<Update>.broadcast(),
     _timers = {},
-    _history = {},
     history = History(enabled: historyEnabled, limit: historyLimit,);
 
   Stream<Update> get updates {
@@ -92,8 +90,8 @@ class TaskMonitor {
     if(!_timers.keys.contains(task.id)) {
       return null;
     }
-    if(_timers[task.id]!.isRunning) {
-
+    if(!_timers[task.id]!.isRunning) {
+      return null;
     }
     return _timers[task.id]!.elapsed;
   }
@@ -105,6 +103,9 @@ class TaskMonitor {
       );
   }
 
+  /// Note that this is for internal use; the monitor spawns tasks, and they
+  /// communicate back via this method. This just means you can call methods like
+  /// complete() on a task, rather than having to go through here.
   void notify({
     required Task task, 
     required TaskStatus status,
@@ -197,6 +198,16 @@ class TaskMonitor {
 
   int get numRunning {
     return running.length;
+  }
+
+  void dispose() {
+    _controller.close();
+    for(String taskId in _timers.keys) {
+      if(_timers[taskId] != null) 
+      {
+        _timers[taskId]!.stop();
+      }
+    }
   }
 
 }
