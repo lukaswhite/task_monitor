@@ -10,6 +10,27 @@ A simple task monitoring package for Dart or Flutter.
 * Store a history of task execution
 * Determine when a task was last run, and whether or not it suceeded
 
+## Quick Start
+
+```dart
+import 'package:task_monitor/task_monitor.dart';
+
+TaskMonitor monitor = TaskMonitor();
+Task task = monitor.create(id: 'synch-data');
+
+monitor.updates.listen((update) => print('${update.task.id}: ${update.status.name}'));
+
+if(!task.isRunning) {
+  task.start();
+  try {
+    // do something
+    task.complete();
+  } on Exception catch (e) {
+    task.failed(error: e,);
+  }
+}
+```
+
 ## Overview
 
 This package helps track the execution of non-trivial tasks; for example fetching data from an API, downloading some files or synnchronising data. 
