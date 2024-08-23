@@ -196,11 +196,11 @@ Task task = monitor.create(id: 'synch-data');
 
 monitor.updates.listen((update) => {
   if(update.status == TaskStatus.started) {
-    logger.info('${update.task.name} has started');
+    logger.finer('${update.task.name} has started');
   } else if(update.status == TaskStatus.completed) {
-    logger.info('${update.task.name} ran in ${update.duration!.inMilliseconds}ms');
+    logger.fine('${update.task.name} ran in ${update.duration!.inMilliseconds}ms');
   } else if(update.status == TaskStatus.failed) {
-    logger.error('${update.task.name} failed!');
+    logger.severe('${update.task.name} failed!');
     yourCustomErrorHandler.log(
       id: update.task.id,
       error: update.error,
@@ -208,10 +208,13 @@ monitor.updates.listen((update) => {
   }
 });
 ```
+> Note that in the above example, `logger` comes from the [logging](https://pub.dev/packages/logging) package; see the Miscellany section for more details.
 
 ## History
 
 By default, the monitor keeps a running history of tasks being run. 
+
+E.g. to get records for a particular task:
 
 ```dart
 List<TaskExecution> history = monitor.getForTask('synch-data');
@@ -281,6 +284,8 @@ You can do the similar, but discarding records where the last was started prior 
 monitor.history.clearTo('synch-data', Duration(days: 7));
 monitor.history.clearAllTo(Duration(days: 7));
 ```
+
+> It might be a good idea to use a package like [cron](https://pub.dev/packages/cron) to do this periodically.
 
 ## Example
 
@@ -450,3 +455,27 @@ In general, you'd probably want to create a single instance of the task monitor;
 There's a minor limitation when storing history, in that there's no reliable way to store exceptions; consider using the `message` field if you need more detail about why tasks failed historically.
 
 Be careful when storing past task executions, as the time a task takes is stored in milliseconds; if you forget to mark a task as complete, or if you have extremely long-running tasks, then that number might get too big for, for example, storing in SQLite.
+
+This package would work well with the [logging](https://pub.dev/packages/logging) package, e.g.:
+
+```dart
+logger = Logger('TaskMonitor');
+
+TaskMonitor monitor = TaskMonitor();
+Task task = monitor.create(id: 'synch-data');
+
+monitor.updates.listen((update) => {
+  if(update.status == TaskStatus.started) {
+    logger.finer('${update.task.name} has started');
+  } else if(update.status == TaskStatus.completed) {
+    logger.fine('${update.task.name} ran in ${update.duration!.inMilliseconds}ms');
+  } else if(update.status == TaskStatus.failed) {
+    logger.severe('${update.task.name} failed!');
+    yourCustomErrorHandler.log(
+      id: update.task.id,
+      error: update.error,
+    );
+  }
+});
+```
+
