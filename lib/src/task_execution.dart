@@ -1,7 +1,9 @@
 import 'task_status.dart';
 import 'mixins/has_status.dart';
+import 'utils/id_generator.dart';
 
 class TaskExecution with HasStatus {
+  final String id;
   final String taskId;  
   final DateTime startedAt;
   TaskStatus _status;
@@ -11,15 +13,19 @@ class TaskExecution with HasStatus {
   String? errorType;
 
   TaskExecution({
+    String? id,
     required this.taskId,
     required TaskStatus status,
     DateTime? startedAt,
     this.duration,
     this.message,
     this.error,
-  }): _status = status, startedAt = startedAt ?? DateTime.now();
+  }): 
+    id = id ?? IdGenerator.generate(),
+    _status = status, startedAt = startedAt ?? DateTime.now();
 
   TaskExecution.fromJson(Map<String, dynamic> data):
+    id = data['id'],
     taskId = data['taskId'],
     _status = TaskStatus.values.where((status) => status.name == data['status']).first,
     startedAt = DateTime.parse(data['startedAt']),
@@ -45,6 +51,7 @@ class TaskExecution with HasStatus {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'taskId': taskId,
       'status': _status.name,
       'startedAt': startedAt.toIso8601String(),

@@ -148,6 +148,12 @@ class History {
     return json;
   }
 
+  void loadFromJson(Map<String, dynamic> json) {
+    for(String taskId in json.keys) {
+      _entries[taskId] = json[taskId].map((item) => TaskExecution.fromJson(item)).cast<TaskExecution>().toList();
+    }
+  }
+
   void dispose() {
     _controller.close();
   }

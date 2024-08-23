@@ -41,6 +41,20 @@ void main() {
       expect(monitor.history.getForTask('task1').last.completedAt, isNull);
       expect(monitor.history.getForTask('task1').last.message, isNull);
     }); 
+    test('Records have an auto-generated ID', () {
+      TaskMonitor monitor = TaskMonitor();
+      monitor.start(id: 'task1');
+      expect(monitor.history.getForTask('task1').last.id, isNotNull);
+      expect(monitor.history.getForTask('task1').last.id, isA<String>());
+    });
+    test('Can override the auto-generated ID', () {
+      TaskExecution execution = TaskExecution(
+        id: 'MY_CUSTOM_ID',
+        taskId: 'task1',
+        status: TaskStatus.completed,
+      );
+      expect(execution.id, 'MY_CUSTOM_ID');
+    }); 
     test('Does not creates record when task started if history is disabled', () {
       TaskMonitor monitor = TaskMonitor(historyEnabled: false,);
       monitor.start(id: 'task1');
@@ -402,12 +416,35 @@ void main() {
       Map<String, dynamic> json = monitor.history.toJson();
       expect(json.keys.contains('task1'), true);      
       expect(json['task1'].length, 2);
+      expect(json['task1'].first['id'], isNotNull);
       expect(json['task1'].first['taskId'], 'task1');
       expect(json['task1'].first['status'], 'completed');
       expect(json['task1'].last['status'], 'failed');
       expect(json.keys.contains('task2'), true);
       expect(json['task2'].length, 2);
       expect(json['task2'].first['taskId'], 'task2');
+    });
+    test('Can load from JSON', (){
+      TaskMonitor monitor = TaskMonitor();
+      Task task1 = monitor.start(id: 'task1');
+      task1.complete(message: 'Rehydration test');
+      Task task2 = monitor.start(id: 'task2');
+      task2.fail();
+      task1.start();
+      task2.start();
+      task1.fail();
+      Map<String, dynamic> json = monitor.history.toJson();
+      TaskMonitor reloaded = TaskMonitor();
+      reloaded.history.loadFromJson(json);
+      expect(reloaded.history.getByTaskId('task1')!.length, 2);
+      expect(reloaded.history.getByTaskId('task1')!.first.status, TaskStatus.completed);
+      expect(
+        reloaded.history.getByTaskId('task1')!.first.id,
+        monitor.history.getByTaskId('task1')!.first.id
+      );
+      expect(reloaded.history.getByTaskId('task1')!.first.message, 'Rehydration test');
+      expect(reloaded.history.getByTaskId('task1')!.last.startedAt, isA<DateTime>());
+      expect(reloaded.history.getByTaskId('task1')!.last.status, TaskStatus.failed);     
     });
   });
 }

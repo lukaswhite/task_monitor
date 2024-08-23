@@ -400,6 +400,49 @@ cron.schedule(Schedule.parse('*/10 * * * *'), () async {
 
 ```
 
+## Storing History
+
+You'll likely want to store the monitor's history somewhere, but this library doesn't make any assumptions about your storage mechanism of choice.
+
+You can create a JSON "snapshot" of the history at any time:
+
+```dart
+Map<String, dynamic> json = monitor.history.toJson();
+```
+
+A good time to do this is whenever a task is added to it:
+
+```dart
+monitor.executions.listen((_) {
+  Map<String, dynamic> json = monitor.history.toJson();
+  // do something with the resulting JSON, e.g. save to Hive
+});
+```
+
+To restore it:
+
+```dart
+monitor.history.loadFromJson(json);
+```
+
+Alternatively, you could listen for new records and save them individually:
+
+```dart
+monitor.executions.listen((execution) {
+  // do something with the resulting object, e.g. insert into an SQLite database
+});
+```
+
+You can add an instance of `TaskExecution` later:
+
+```dart
+monitor.history.add(execution);
+```
+
+> The `TaskExecution` class can load from, and export to JSON 
+
+To make this easier, each task has an auto-generated unique ID you could use as a primary key if you wish.
+
 ## Miscellany
 
 In general, you'd probably want to create a single instance of the task monitor; there are various ways to do this, including using the [Get It](https://pub.dev/packages/get_it) package. That may not always be the case; if you have a bunch of discreet tasks &mdash; such as running the tasks that make up your app's initialization process &mdash; then you may want to create an instance in the context of that process.
