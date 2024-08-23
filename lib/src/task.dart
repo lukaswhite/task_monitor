@@ -1,30 +1,31 @@
 import 'task_status.dart';
 import 'task_monitor_base.dart';
 import 'errors/errors.dart';
+import 'mixins/has_status.dart';
 
-class Task {
+class Task with HasStatus {
   
   final String id;
   final String name;
   final TaskMonitor _monitor;
   final bool allowConcurrent;
-  TaskStatus status;
+  TaskStatus _status;
   Map<String, dynamic> data = {};
 
   Task({
     required this.id, 
-    required this.status,
+    required TaskStatus status,
     required TaskMonitor monitor,
     String? name,
     this.allowConcurrent = false,
-  }): _monitor = monitor, name = name ?? id;
+  }): _status = status, _monitor = monitor, name = name ?? id;
   
   Task.start({
     required this.id,
     required TaskMonitor monitor,
     String? name,
     this.allowConcurrent = false,
-  }): _monitor = monitor, status = TaskStatus.started, name = name ?? id;
+  }): _monitor = monitor, _status = TaskStatus.started, name = name ?? id;
 
   void start({String? message}) {
     if(!canStart) {
@@ -35,7 +36,7 @@ class Task {
       status: TaskStatus.started,
       message: message,
     );
-    status = TaskStatus.started;
+    _status = TaskStatus.started;
   }
 
   void complete({
@@ -51,10 +52,10 @@ class Task {
       message: message,
       data: data,
     );
-    status = TaskStatus.completed;
+    _status = TaskStatus.completed;
   }
 
-  void fail({String? message, Error? error,}) {
+  void fail({String? message, Exception? error,}) {
     if(status != TaskStatus.started) {
       throw TaskNotStarted();
     }
@@ -64,35 +65,16 @@ class Task {
       message: message,
       error: error,
     );
-    status = TaskStatus.failed;
+    _status = TaskStatus.failed;
   }
 
   bool get canStart {
     return allowConcurrent || isPending || isCompleted || isFailed;
   }
 
-  bool get isStarted {
-    return status == TaskStatus.started;
-  }
-
-  bool get isRunning {
-    return isStarted;
-  }
-
-  bool get isPending {
-    return status == TaskStatus.pending;
-  }
-
-  bool get isCompleted {
-    return status == TaskStatus.completed;
-  }
-
-  bool get isFailed {
-    return status == TaskStatus.failed;
-  }
-
-  bool get isCompletedOrFailed {
-    return isCompleted || isFailed;
+  @override
+  TaskStatus get status {
+    return _status;
   }
 
   @override

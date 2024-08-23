@@ -1,1 +1,1 @@
-class TaskNotPending extends Error {}
+class TaskNotPending implements Exception {}

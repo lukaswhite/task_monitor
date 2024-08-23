@@ -1,1 +1,1 @@
-class TaskCannotStart extends Error {}
+class TaskCannotStart implements Exception {}

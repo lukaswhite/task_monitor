@@ -2,6 +2,14 @@
 
 A simple task monitoring package for Dart or Flutter.
 
+## Features
+
+* Monitor running tasks
+* Check if a task is currently running
+* Monitor tasks that have completed or failed
+* Store a history of task execution
+* Determine when a task was last run, and whether or not it suceeded
+
 ## Overview
 
 This package helps track the execution of non-trivial tasks; for example fetching data from an API, downloading some files or synnchronising data. 
@@ -84,6 +92,20 @@ if(task.isCompletedOrFailed) {}
 
 ```
 
+You can let the monitor create an ID for you:
+
+```dart
+monitor.create(id: monitor.monitor.uniqueId());
+// id e.g. task-12345
+```
+
+You can provide a prefix:
+
+```dart
+monitor.create(id: monitor.monitor.uniqueId(prefix: 'fetch'));
+// id e.g. fetch-12345
+```
+
 ## Starting a Task
 
 We've seen above that you can create and start a task in one function call; oherwise do this:
@@ -135,7 +157,7 @@ You can optionally provide an error:
 ```
 try {
   // do something
-} on Error catch(e){
+} on Exception catch(e){
   task.fail(
     message: 'Failed to synch!,
     error: e,
@@ -171,10 +193,10 @@ monitor.updates.listen((update) => {
 By default, the monitor keeps a running history of tasks being run. 
 
 ```dart
-List<TaskExecution> history = monitor.getHistory('synch-data');
+List<TaskExecution> history = monitor.getForTask('synch-data');
 ```
 
-This provides:
+This provides a list of objects containing the following properties:
 
  - The `taskId`
  - The `status`
@@ -188,33 +210,60 @@ For example, you can check whether the last execution completed successfully:
 
 ```dart
 if(
-    monitor.getHistory('synch-data').isNotEmpty() &&
-    monitor.getHistory('synch-data').last.status == TaskStatus.completed
+    monitor.getForTask('synch-data').isNotEmpty() &&
+    monitor.getForTask('synch-data').last.status == TaskStatus.completed
 ) {}
 ```
 
 Or to find out when it last ran sucessfully:
 
 ```dart
-if(
-    monitor.getHistory('synch-data').isNotEmpty() &&
-    monitor.getHistory('synch-data').last.status == TaskStatus.completed
-) {
-    if(DateTime.now().subtract(monitor.getHistory('synch-data').last.completedAt).inMinutes > 60) {
-        // run again?
-    }
-}
+DateTime? lastSuccess = monitor.history.lastCompletedAt('synch-data');
 ```
 
-Bear in mind that this stores the records in memory, so you may wish to create a storage mechanism by hooking into the `updates` stream.
+Bear in mind that this stores the records in memory, so you may wish to create a storage mechanism by hooking into the `executions` stream on `monitor.history`.
 
-You can disable history:
+You can disable history when creating a task monitor:
 
 ```dart
 TaskMonitor monitor = TaskMonitor(historyEnabled: false,);
 ```
 
+At a later time:
+
+```dart
+monitor.history.disable();
+```
+
+Re-enable like so:
+
+```dart
+monitor.history.enable();
+```
+
 You can limit the number of records. In the following example, the monitor will only keep hold of the last 2o executions:
+
+```dart
+TaskMonitor monitor = TaskMonitor(historyLimit: 20,);
+```
+
+You can clear the history for a particular task or all tasks. 
+
+```dart
+monitor.history.clear('synch-data');
+monitor.history.clearAll();
+```
+
+You can do the similar, but discarding records where the last was started prior to the specified time. For example, to clear records from more than seven days ago:
+
+```dart
+monitor.history.clearTo('synch-data', Duration(days: 7));
+monitor.history.clearAllTo(Duration(days: 7));
+```
+
+## Example
+
+Here's an example that shows various areas of functionality:
 
 ```dart
 import 'package:task_monitor/task_monitor.dart';
@@ -298,12 +347,14 @@ void main() async {
     taskThree(),    
   ]);
 
-  print('Task One last ran ${DateTime.now().difference(monitor.getHistory('task1').first!.completedAt!).inMilliseconds}ms ago');
+  await Future.delayed(const Duration(seconds: 10));
 
+  print('Task One last ran ${monitor.history.getTimeSinceLastCompleted('task1')!.inMilliseconds}ms ago');
+  
 }
 ```
 
-## Cron
+## Cron Example
 
 Here's an example of how you might use this package with [cron](https://pub.dev/packages/cron). It ensures that a task will only run once at a given time.
 
@@ -327,3 +378,11 @@ cron.schedule(Schedule.parse('*/10 * * * *'), () async {
 });
 
 ```
+
+## Miscellany
+
+In general, you'd probably want to create a single instance of the task monitor; there are various ways to do this, including using the [Get It](https://pub.dev/packages/get_it) package. That may not always be the case; if you have a bunch of discreet tasks &mdash; such as running the tasks that make up your app's initialization process &mdash; then you may want to create an instance in the context of that process.
+
+There's a minor limitation when storing history, in that there's no reliable way to store exceptions; consider using the `message` field if you need more detail about why tasks failed historically.
+
+Be careful when storing past task executions, as the time a task takes is stored in milliseconds; if you forget to mark a task as complete, or if you have extremely long-running tasks, then that number might get too big for, for example, storing in SQLite.

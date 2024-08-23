@@ -58,8 +58,8 @@ void main() async {
         print(' - ${update.message}');
       }
       if(update.hasData && update.data.containsKey('counts') && update.data['counts'] is SynchCounts) {
-        SynchCounts counts = update.data['counts'];
-        print('Created ${counts.created} records, updated ${counts.updated} and deleted ${counts.deleted}');
+        SynchCounts? counts = update.getData<SynchCounts>('counts');
+        print('Created ${counts!.created} records, updated ${counts!.updated} and deleted ${counts!.deleted}');
       }
     }
   );
@@ -79,6 +79,8 @@ void main() async {
     taskThree(),    
   ]);
 
-  print('Task One last ran ${DateTime.now().difference(monitor.getHistory('task1').first!.completedAt!).inMilliseconds}ms ago');
+  await Future.delayed(const Duration(seconds: 10));
+
+  print('Task One last ran ${monitor.history.getTimeSinceLastCompleted('task1')!.inMilliseconds}ms ago');
 
 }
