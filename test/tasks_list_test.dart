@@ -119,6 +119,7 @@ void main() {
       ]);
       expect(tasks.percentageFailed(), isA<double>());
       expect(tasks.percentageFailed(), 40);
+      expect(tasks.inTimePeriod(const Duration(hours: 24,)).percentageFailed(), 40);
     });
     test('Percentage zero for empty list', () {
       TasksList tasks = TasksList();
