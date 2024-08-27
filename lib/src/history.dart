@@ -1,10 +1,11 @@
 import 'dart:async';
 
 import 'package:task_monitor/task_monitor.dart';
+import 'tasks_list.dart';
 
 class History {
 
-  final Map<String, List<TaskExecution>> _entries;
+  final Map<String, TasksList> _entries;
   bool enabled;
   int? limit;
   final StreamController<TaskExecution> _controller;
@@ -20,7 +21,7 @@ class History {
     return _controller.stream;
   }
 
-  List<TaskExecution> getForTask(String taskId) {
+  TasksList getForTask(String taskId) {
     return getOrCreateByTaskId(taskId);
   }
 
@@ -99,9 +100,15 @@ class History {
   }
 
   void clearTo(String taskId, Duration duration) {
-    _entries[taskId] = getOrCreateByTaskId(taskId)
+    List<TaskExecution> tasks = getOrCreateByTaskId(taskId)
       .where((task) => DateTime.now().difference(task.startedAt).inMilliseconds < duration.inMilliseconds)
       .toList();
+    _entries[taskId] = TasksList();
+    _entries[taskId]!.addAll(tasks);
+    /**
+      .where((task) => DateTime.now().difference(task.startedAt).inMilliseconds < duration.inMilliseconds)
+      .toList();
+      **/
   }
 
   void clearAllTo(Duration duration) {
@@ -110,15 +117,15 @@ class History {
     }
   }
 
-  List<TaskExecution>? getByTaskId(String taskId) {
+  TasksList? getByTaskId(String taskId) {
     return _entries[taskId];
   }
 
-  List<TaskExecution> getOrCreateByTaskId(String taskId) {
+  TasksList getOrCreateByTaskId(String taskId) {
     if(_entries.keys.contains(taskId)) {
       return _entries[taskId]!;
     }
-    _entries[taskId] = [];
+    _entries[taskId] = TasksList();
     return _entries[taskId]!;
   }
 
@@ -150,7 +157,8 @@ class History {
 
   void loadFromJson(Map<String, dynamic> json) {
     for(String taskId in json.keys) {
-      _entries[taskId] = json[taskId].map((item) => TaskExecution.fromJson(item)).cast<TaskExecution>().toList();
+      List<TaskExecution> tasks = json[taskId].map((item) => TaskExecution.fromJson(item)).cast<TaskExecution>().toList();
+      _entries[taskId] = TasksList()..addAll(tasks);      
     }
   }
 

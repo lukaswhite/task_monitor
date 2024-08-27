@@ -287,6 +287,53 @@ monitor.history.clearAllTo(Duration(days: 7));
 
 > It might be a good idea to use a package like [cron](https://pub.dev/packages/cron) to do this periodically.
 
+## Querying history
+
+The following returns records for a particular task:
+
+```dart
+TasksList tasks = monitor.history.getForTask('synch-data');
+```
+
+Note the return type; it's a specialized list that includes a bunch of methods for filtering and querying it.
+
+For example, to get records of a task having failed:
+
+```dart
+TasksList tasks = monitor.history.getForTask('synch-data').failed();
+```
+
+To get records of a task having failed in the last 24 hours:
+
+```dart
+TasksList tasks = monitor.history.getForTask('synch-data').failedInTimePerdiod(const Duration(hours: 24,));
+```
+
+To find out how long, on average, as task takes to complete:
+
+```dart
+Duration max = monitor.history.getForTask('synch-data')
+  .completed()
+  .averageTimeTaken();
+```
+
+A more complex example; the following looks at the successful executions of a task over a 24 hour perdiod, and determines the maximum time it took to run it:
+
+```dart
+Duration max = monitor.history.getForTask('synch-data')
+  .completed()
+  .inTimePeriod(const Duration(hours: 24,))
+  .maxTimeTaken();
+```
+
+Finally, to determine the percentage of times a task has failed over the last 24 hours:
+
+```dart
+double failRate = monitor.history.getForTask('synch-data')
+  .inTimePeriod(const Duration(hours: 24,))
+  .percentageFailed();
+```
+
 ## Example
 
 Here's an example that shows various areas of functionality:
