@@ -11,6 +11,7 @@ class Task with HasStatus {
   final bool allowConcurrent;
   TaskStatus _status;
   Map<String, dynamic> data = {};
+  List<String> tags = []; 
 
   /// Note that you shouldn't instantiate a task directly; let the monitor do it.
   /// That way, the task has a line of communication back to the monitor, which
@@ -21,7 +22,11 @@ class Task with HasStatus {
     required TaskMonitor monitor,
     String? name,
     this.allowConcurrent = false,
-  }): _status = status, _monitor = monitor, name = name ?? id;
+    List<String>? tags,
+  }): _status = status, 
+      _monitor = monitor, 
+      name = name ?? id,
+      tags = tags ?? [];
   
   Task.start({
     required this.id,
@@ -73,6 +78,10 @@ class Task with HasStatus {
 
   bool get canStart {
     return allowConcurrent || isPending || isCompleted || isFailed;
+  }
+
+  bool hasTag(String tag) {
+    return tags.contains(tag);
   }
 
   @override

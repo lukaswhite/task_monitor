@@ -43,13 +43,14 @@ class TaskMonitor {
     return _controller.stream.where((update) => update.status == TaskStatus.failed);
   }
 
-  Task create({required String id, String? name,}) {
+  Task create({required String id, String? name, List<String>? tags,}) {
     if(getTask(id) != null) {
       throw DuplicateTaskId();
     }
     Task task = Task(
       id: id, 
       name: name,
+      tags: tags,
       monitor: this,
       status: TaskStatus.pending,
     );
@@ -178,6 +179,10 @@ class TaskMonitor {
 
   List<Task> get completed {
     return _tasks.where((task) => task.isCompleted).toList();
+  }
+
+  List<Task> taggedWith(String tag) {
+    return all.where((task) => task.hasTag(tag)).toList();
   }
 
   int get totalTasks {

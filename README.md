@@ -127,6 +127,22 @@ monitor.create(id: monitor.monitor.uniqueId(prefix: 'fetch'));
 // id e.g. fetch-12345
 ```
 
+You can also add tags to a task. Suppose you had twenty tasks registered, ten of which involve network requests and three which call a particular third-party API.
+
+```dart
+monitor.create(id: 'synch-contacts', tags: ['network']);
+monitor.create(id: 'check-updates', tags: ['network', 'some-api']);
+monitor.create(id: 'synch-updates', tags: ['network', 'some-api']);
+// ...etc
+```
+
+If many of the network-related tasks are failing, it may indicate a network connectivity issue; but if the failures are restricted to the ones that involve a particular API, then that may be where the problem lies.
+
+```dart
+List<Task> someApiTasks = monitor.taggedWith('some-api');
+// ...check the history
+```
+
 ## Starting a Task
 
 We've seen above that you can create and start a task in one function call; oherwise do this:
@@ -212,7 +228,7 @@ monitor.updates.listen((update) => {
 
 ## History
 
-By default, the monitor keeps a running history of tasks being run. 
+By default, the monitor keeps a history of tasks that have been started, then updates those records when a task completes or fails. 
 
 E.g. to get records for a particular task:
 
@@ -289,6 +305,8 @@ monitor.history.clearAllTo(Duration(days: 7));
 
 ## Querying history
 
+Where the task history becomes useful is by exposing a number of methods for querying the records by status or when they were run, as well as exposing information such as the average time a task has been taking to run. You can build up some pretty complex queries to suit your monitoring needs; for example, if a particular task has shown a particularly high failure rate over the last 3 hours then it may be time to send an alert.
+
 The following returns records for a particular task:
 
 ```dart
@@ -332,6 +350,10 @@ Finally, to determine the percentage of times a task has failed over the last 24
 double failRate = monitor.history.getForTask('synch-data')
   .inTimePeriod(const Duration(hours: 24,))
   .percentageFailed();
+
+if (failRate >= 20.0) {
+  // do something
+}
 ```
 
 ## Example
@@ -429,7 +451,7 @@ void main() async {
 
 ## Cron Example
 
-Here's an example of how you might use this package with [cron](https://pub.dev/packages/cron). It ensures that a task will only run once at a given time.
+Here's a simple example of how you might use this package with [cron](https://pub.dev/packages/cron). It ensures that a task will only run once at a given time.
 
 ```dart
 import 'package:task_monitor/task_monitor.dart';
@@ -491,7 +513,7 @@ You can add an instance of `TaskExecution` later:
 monitor.history.add(execution);
 ```
 
-> The `TaskExecution` class can load from, and export to JSON 
+> The `TaskExecution` class can load from, and export to JSON too.
 
 To make this easier, each task has an auto-generated unique ID you could use as a primary key if you wish.
 
@@ -525,4 +547,3 @@ monitor.updates.listen((update) => {
   }
 });
 ```
-

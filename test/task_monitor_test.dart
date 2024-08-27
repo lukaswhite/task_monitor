@@ -112,5 +112,16 @@ void main() {
       expect(monitor.history.last('task')!.error != null, true);
       expect(monitor.history.last('task')!.status, TaskStatus.failed);
     });
+    test('Can get tasks with a particular tag', () async {
+      TaskMonitor monitor = TaskMonitor();
+      monitor.create(id: 'task1', tags: ['network']);
+      monitor.create(id: 'task2');
+      monitor.create(id: 'task3', tags: ['sqlite']);
+      monitor.create(id: 'task4', tags: ['network', 'sqlite']);
+      monitor.create(id: 'task5', tags: ['network', 'my-api']);
+      monitor.create(id: 'task6', tags: ['network', 'my-api']);
+      expect(monitor.taggedWith('network').length, 4);
+      expect(monitor.taggedWith('sqlite').length, 2);
+    });
   });
 }
