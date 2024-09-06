@@ -111,6 +111,35 @@ void main() {
       expect(monitor.history.getForTask('task').length, 1);
       expect(monitor.history.last('task')!.error != null, true);
       expect(monitor.history.last('task')!.status, TaskStatus.failed);
+      expect(monitor.history.last('task')!.error, isA<Exception>());
+    });
+    test('Can run functions that complete with message', () async {
+      TaskMonitor monitor = TaskMonitor();
+      Task task = monitor.create(id: 'task');
+      Task executed = await monitor.run(task, () async {
+        await Future.delayed(const Duration(milliseconds: 10));
+        return true;
+      }, 
+        startedMessage: 'Task started',
+        completedMessage: 'Task completed',
+      );
+      expect(executed.isCompleted, true);
+      expect(monitor.history.getForTask('task').length, 1);
+      expect(monitor.history.last('task')!.status, TaskStatus.completed);
+      expect(monitor.history.last('task')!.message, 'Task completed');
+    });
+    test('Can run functions that fail with message', () async {
+      TaskMonitor monitor = TaskMonitor();
+      Task task = monitor.create(id: 'task');
+      Task executed = await monitor.run(task, () async {
+        await Future.delayed(const Duration(milliseconds: 10));
+        throw Exception();
+      }, failedMessage: 'Task failed');
+      expect(executed.isFailed, true);
+      expect(monitor.history.getForTask('task').length, 1);
+      expect(monitor.history.last('task')!.error != null, true);
+      expect(monitor.history.last('task')!.status, TaskStatus.failed);
+      expect(monitor.history.last('task')!.message, 'Task failed');
     });
     test('Can get tasks with a particular tag', () async {
       TaskMonitor monitor = TaskMonitor();

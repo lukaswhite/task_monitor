@@ -69,14 +69,22 @@ class TaskMonitor {
     )..start();
   }
 
-  Future<Task> run(Task task, Function callback) async {
-    task.start();
+  Future<Task> run(
+    Task task, 
+    Function callback,
+    {
+      String? startedMessage,
+      String? completedMessage,
+      String? failedMessage,
+    }
+  ) async {
+    task.start(message: startedMessage,);
     try {
       await callback();
-      task.complete();
+      task.complete(message: completedMessage,);
       return task;
     } on Exception catch (e) {
-      task.fail(error: e,);
+      task.fail(error: e, message: failedMessage,);
       return task;
     }
   }
