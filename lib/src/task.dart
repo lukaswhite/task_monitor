@@ -37,7 +37,7 @@ class Task with HasStatus {
 
   void start({String? message}) {
     if(!canStart) {
-      throw TaskCannotStart();
+      //throw TaskCannotStart();
     }
     _monitor.notify(
       task: this, 
